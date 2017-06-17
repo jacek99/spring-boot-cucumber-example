@@ -1,0 +1,56 @@
+plugins {
+    id 'org.springframework.boot' version '1.5.4.RELEASE'
+}
+
+apply plugin: 'java'
+apply plugin: 'war'
+apply plugin: 'findbugs'
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '4.0'
+}
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    compileOnly "org.projectlombok:lombok"
+
+    compile("org.springframework.boot:spring-boot-starter-web")
+
+    compile 'com.datastax.cassandra:cassandra-driver-core'
+    compile 'com.datastax.cassandra:cassandra-driver-mapping'
+
+    runtime("org.springframework.boot:spring-boot-starter-tomcat")
+}
+
+// Spring Boot
+bootRepackage {
+    mainClass = 'com.github.jacek99.springbootcucumber.Application'
+    executable = true
+}
+
+war {
+    baseName = 'spring-boot-cucumber-example'
+    version =  '0.1.0'
+}
+
+
+// code quality
+findbugs {
+    effort = "max"
+    reportLevel = "medium"
+    includeFilter = file("$rootProject.projectDir/findBugsIncludeFilter.xml")
+    excludeFilter = file("$rootProject.projectDir/findBugsExcludeFilter.xml")
+}
+
+tasks.withType(FindBugs) {
+    reports {
+        xml.enabled false
+        html.enabled true
+    }
+}
+
+check.dependsOn test
+build.dependsOn check
