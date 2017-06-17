@@ -1,0 +1,25 @@
+spring:
+logging:
+  level:
+    com.github.jacek99: INFO
+    org.springframework.web: WARN
+
+# HTTP server
+server:
+  por: 8080
+  address: 127.0.0.1
+
+# Separate admin port
+management:
+  port: 18080
+  address: 127.0.0.1
+  security:
+    enabled: false
+
+# Cassandra
+cassandra:
+  host: 127.0.0.1
+  port: 9042
+  keyspace: spring_boot
+  replicationStrategy: SimpleStrategy
+  replicationFactor: 1

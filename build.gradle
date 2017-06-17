@@ -18,11 +18,16 @@ dependencies {
     compileOnly "org.projectlombok:lombok"
 
     compile("org.springframework.boot:spring-boot-starter-web")
+    compile("org.springframework.boot:spring-boot-starter-security")
+    compile("org.springframework.boot:spring-boot-starter-actuator")
 
+    compile 'com.google.guava:guava'
     compile 'com.datastax.cassandra:cassandra-driver-core'
     compile 'com.datastax.cassandra:cassandra-driver-mapping'
 
     runtime("org.springframework.boot:spring-boot-starter-tomcat")
+
+    testCompile("junit:junit")
 }
 
 // Spring Boot
