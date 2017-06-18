@@ -10,17 +10,17 @@ public class SecurityConstants {
     /**
      * Allow to admin entire system, across all tenants
      */
-    public static final String ROLE_SYSTEM_ADMIN = "ROLE_SYSTEM_ADMIN";
+    public static final String ROLE_SYSTEM_ADMIN = "SYSTEM_ADMIN";
 
     /**
      * User within single tenant
      */
-    public static final String ROLE_TENANT_USER = "ROLE_TENANT_ADMIN";
+    public static final String ROLE_TENANT_USER = "TENANT_ADMIN";
 
     /**
      * Admin within single tenant
      */
-    public static final String ROLE_TENANT_ADMIN = "ROLE_TENANT_ADMIN";
+    public static final String ROLE_TENANT_ADMIN = "TENANT_ADMIN";
 
 
 }

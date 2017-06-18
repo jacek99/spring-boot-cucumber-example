@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public class TenantUserDao extends AbstractCassandraDao<TenantUser,String> {
 
-    protected TenantUserDao() {
+    public TenantUserDao() {
         super(TenantUser.class);
     }
 

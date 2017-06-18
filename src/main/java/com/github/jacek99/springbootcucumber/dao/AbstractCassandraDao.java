@@ -10,6 +10,7 @@ import com.github.jacek99.springbootcucumber.cassandra.CassandraService;
 import com.github.jacek99.springbootcucumber.domain.ITenantEntity;
 import com.github.jacek99.springbootcucumber.domain.Tenant;
 import com.github.jacek99.springbootcucumber.exception.ConflictException;
+import com.github.jacek99.springbootcucumber.exception.ConstraintViolationException;
 import com.github.jacek99.springbootcucumber.exception.NotFoundException;
 import com.github.jacek99.springbootcucumber.security.TenantPrincipal;
 import com.google.common.collect.Lists;
@@ -17,11 +18,15 @@ import com.sun.org.apache.regexp.internal.RE;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
+import javax.validation.ConstraintViolation;
 import lombok.AccessLevel;
 import lombok.Getter;
 import org.omg.CORBA.PUBLIC_MEMBER;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
 /**
  * Abstract ancestor for all entity DAOs
@@ -32,6 +37,9 @@ public abstract class AbstractCassandraDao<E extends Comparable<E>,ID> implement
     @Autowired
     @Getter(AccessLevel.PROTECTED)
     private CassandraService cassandra;
+
+    @Autowired
+    private LocalValidatorFactoryBean validator;
 
     @Getter(AccessLevel.PUBLIC)
     private final Class<E> entityType;
@@ -95,13 +103,40 @@ public abstract class AbstractCassandraDao<E extends Comparable<E>,ID> implement
         return all;
     }
 
+    protected void processSave(TenantPrincipal user, E entity) {
+        // ensure it belongs to the right tenant
+        if (entity instanceof ITenantEntity) {
+            ((ITenantEntity)entity).setTenantId(user.getTenant().getTenantId());
+        }
+
+        // ensure it gets validated
+        Set<ConstraintViolation<E>> errors = validator.validate(entity);
+        if (errors != null && !errors.isEmpty()) {
+            // sort them in alphabetical order, for consistency in testing
+            Set<ConstraintViolation<E>> sorted = new TreeSet<>(
+                    (o1,o2) -> o1.getPropertyPath().toString()
+                    .compareTo(o2.getPropertyPath().toString())
+            );
+            sorted.addAll(errors);
+
+            ConstraintViolation first = sorted.iterator().next();
+            throw new ConstraintViolationException(
+                    first.getPropertyPath().toString(),
+                    first.getMessage());
+        }
+
+        // perform actual save
+        getMapper().save(entity);
+
+    }
+
     @Override
     public void save(TenantPrincipal user, E entity) {
         ID id = getEntityId(entity);
         if (findById(user,id).isPresent()) {
             throw new ConflictException(entityType,String.valueOf(id),"already exists");
         } else {
-            getMapper().save(entity);
+            processSave(user, entity);
         }
     }
 
@@ -110,7 +145,7 @@ public abstract class AbstractCassandraDao<E extends Comparable<E>,ID> implement
         ID id = getEntityId(entity);
         // ensure entity already exists, since this an update
         if (findById(user,id).isPresent()) {
-            getMapper().save(entity);
+            processSave(user, entity);
         } else {
             throw new NotFoundException(entityType,String.valueOf(id));
         }
@@ -118,7 +153,7 @@ public abstract class AbstractCassandraDao<E extends Comparable<E>,ID> implement
 
     @Override
     public void saveOrUpate(TenantPrincipal user, E entity) {
-        getMapper().save(entity);
+        processSave(user, entity);
     }
 
     @Override

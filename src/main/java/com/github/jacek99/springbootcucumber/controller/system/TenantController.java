@@ -1,4 +1,4 @@
-package com.github.jacek99.springbootcucumber.controller;
+package com.github.jacek99.springbootcucumber.controller.system;
 
 import com.github.jacek99.springbootcucumber.dao.TenantDao;
 import com.github.jacek99.springbootcucumber.domain.Tenant;
@@ -51,11 +51,16 @@ public class TenantController {
         dao.update(user, entity);
     }
 
+    @RequestMapping(method = RequestMethod.PUT)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void saveOrUpdate(@AuthenticationPrincipal TenantPrincipal user, @RequestBody @Valid Tenant entity) {
+        dao.saveOrUpate(user, entity);
+    }
+
     @RequestMapping(value = "/{tenantId}", method = RequestMethod.DELETE)
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@AuthenticationPrincipal TenantPrincipal user, @PathVariable("tenantId") String tenantId) {
         dao.delete(user,tenantId);
     }
-
 
 }

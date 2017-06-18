@@ -10,4 +10,7 @@ public interface ITenantEntity {
      * Should be the @PartitionKey of the entity as well
      */
     String getTenantId();
+
+    void setTenantId(String id);
+
 }
