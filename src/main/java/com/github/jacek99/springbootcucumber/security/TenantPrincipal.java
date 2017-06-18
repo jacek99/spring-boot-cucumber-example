@@ -10,7 +10,7 @@ import lombok.Data;
  * @author Jacek Furmankiewicz
  */
 @Data
-public class TenantUser implements Principal {
+public class TenantPrincipal implements Principal {
 
     private String name;
 

@@ -16,8 +16,7 @@ import org.hibernate.validator.constraints.NotEmpty;
  */
 @Table(name = CassandraConstants.TABLE_TENANT)
 @Data
-public class Tenant {
-
+public class Tenant implements Comparable<Tenant> {
 
     @PartitionKey
     @Column(name = CassandraConstants.COLUMN_ID)
@@ -35,4 +34,12 @@ public class Tenant {
     @Pattern(regexp = "(.+)\\.(.+)") // very simple regex
     private String url;
 
+    @Override
+    public int compareTo(Tenant o) {
+        if (this.tenantId != null && o != null) {
+            return this.tenantId.compareTo(o.getTenantId());
+        } else {
+            return 0;
+        }
+    }
 }
