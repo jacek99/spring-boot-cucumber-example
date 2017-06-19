@@ -1,9 +1,10 @@
+import org.apache.tools.ant.taskdefs.condition.Os
+
 plugins {
     id 'org.springframework.boot' version '1.5.4.RELEASE'
 }
 
 apply plugin: 'java'
-apply plugin: 'war'
 apply plugin: 'findbugs'
 
 task wrapper(type: Wrapper) {
@@ -38,12 +39,6 @@ bootRepackage {
     executable = true
 }
 
-war {
-    baseName = 'spring-boot-cucumber-example'
-    version =  '0.1.0'
-}
-
-
 // code quality
 findbugs {
     effort = "max"
@@ -61,3 +56,84 @@ tasks.withType(FindBugs) {
 
 check.dependsOn test
 build.dependsOn check
+
+/**
+ * BDD support
+ */
+project.ext.childProcesses = [:]
+
+task shutdownRunningApps() << {
+    if (project.ext.childProcesses) {
+        println "Shutting down running processes..."
+        for (Map.Entry<String, Process> process : project.ext.childProcesses) {
+            println "Shutting down '${process.key}' process";
+            process.value.destroy()
+        }
+        project.ext.childProcesses.clear()
+    }
+}
+
+addShutdownHook {
+    shutdownRunningApps()
+}
+
+
+task bootRunAsync(dependsOn: build) << {
+
+    println ext
+
+    def processName = "springboot-cucumber"
+    def jarPath = "$project.projectDir/build/libs/spring-boot-cucumber-example-${version}.jar"
+
+    if (project.ext.childProcesses[processName] == null) {
+        println "Starting '${processName}' process on separate thread..."
+
+        // ensure file exists
+        def input = new File(jarPath)
+        assert input.exists()
+
+        // create process (different for Linux vs Windows)
+        def shell = Os.isFamily(Os.FAMILY_WINDOWS) ? "cmd" : "/bin/bash"
+        def shellParam = Os.isFamily(Os.FAMILY_WINDOWS) ? "/C" : "-c"
+
+        ProcessBuilder pb = new ProcessBuilder(shell,shellParam,
+            "java -jar -server " + jarPath)
+        pb.directory(new File("."))
+        //set environment variable to allow truncating DB between BDD scenarios
+        Map<String, String> env = pb.environment();
+        env.put("TEST_MODE", "true");
+
+        Thread.startDaemon {
+            project.ext.childProcesses[processName] = pb.start()
+            project.ext.childProcesses[processName].consumeProcessOutput(System.out, System.err)
+        }
+        sleep(1000)
+        if (project.ext.childProcesses[processName] == null) {
+            throw new GradleException("Unable to start up process ${processName} (null)")
+        }
+    }
+
+}
+
+task bdd(group: "test", type: Exec, dependsOn: bootRunAsync) {
+    description = "Tests application with Cucumber BDD integration tests"
+
+    workingDir = "./src/test/cucumber"
+    commandLine = buildCucumberCommandLine()
+
+    // ensure test apps get shutdown even if BDD test run fails//
+    finalizedBy "shutdownRunningApps"
+}
+
+List buildCucumberCommandLine() {
+    // ugly Windows code
+    List bundleCmd = Os.isFamily(Os.FAMILY_WINDOWS) ? ['cmd', '/c', 'bundle.bat', 'exec'] : ['bundle', 'exec']
+
+    List cucumberCmd = ['cucumber',
+                        '--format', 'pretty',
+                        '--format', 'junit',
+                        '-o', "${project.projectDir}/build/test-results/junit"]
+
+    return (bundleCmd + cucumberCmd)
+}
+
