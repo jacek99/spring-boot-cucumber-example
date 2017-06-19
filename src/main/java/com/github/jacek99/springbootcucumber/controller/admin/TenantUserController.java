@@ -19,12 +19,12 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * REST APIs for creating tenantTokens within a tenant
+ * REST APIs for creating tenant users within a tenant
  * For tenant admins only
  * @author Jacek Furmankiewicz *
  */
 @RestController
-@RequestMapping(value = "/myapp/admin/tenantTokens", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+@RequestMapping(value = "/myapp/admin/users", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public class TenantUserController {
 
     @Autowired
@@ -42,12 +42,12 @@ public class TenantUserController {
         return entity;
     }
 
-    @RequestMapping(value = "/{tenantTokenId}", method = RequestMethod.PATCH)
+    @RequestMapping(value = "/{tenantId}", method = RequestMethod.PATCH)
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void update(@AuthenticationPrincipal TenantToken tenantToken, @PathVariable("tenantTokenId") String tenantTokenID,
+    public void update(@AuthenticationPrincipal TenantToken tenantToken, @PathVariable("tenantId") String tenantTokenID,
                        @RequestBody @Valid TenantUser entity) {
         // path sanity check
-        Preconditions.checkArgument(tenantTokenID.equals(entity.getUserId()),"tenantTokenId is not consistent with path");
+        Preconditions.checkArgument(tenantTokenID.equals(entity.getUserId()),"tenantId is not consistent with path");
 
         dao.update(tenantToken, entity);
     }
@@ -58,10 +58,10 @@ public class TenantUserController {
         dao.saveOrUpate(tenantToken, entity);
     }
 
-    @RequestMapping(value = "/{tenantTokenId}", method = RequestMethod.DELETE)
+    @RequestMapping(value = "/{tenantId}", method = RequestMethod.DELETE)
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@AuthenticationPrincipal TenantToken tenantToken, @PathVariable("tenantTokenId") String tenantTokenId) {
-        dao.delete(tenantToken,tenantTokenId);
+    public void delete(@AuthenticationPrincipal TenantToken tenantToken, @PathVariable("tenantId") String tenantId) {
+        dao.delete(tenantToken,tenantId);
     }
 
 }
