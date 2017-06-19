@@ -64,7 +64,7 @@ and never hit actual disk
 
 The Gradle task
 
-    ./gradlew bdd8
+    ./gradlew bdd
     
 will:
 
