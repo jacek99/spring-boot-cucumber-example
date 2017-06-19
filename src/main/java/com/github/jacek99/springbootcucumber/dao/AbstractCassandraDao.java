@@ -6,6 +6,7 @@ import com.datastax.driver.core.querybuilder.Select;
 import com.datastax.driver.mapping.Mapper;
 import com.datastax.driver.mapping.Result;
 import com.datastax.driver.mapping.annotations.Table;
+import com.github.jacek99.springbootcucumber.ThreadLocals;
 import com.github.jacek99.springbootcucumber.cassandra.CassandraService;
 import com.github.jacek99.springbootcucumber.domain.ITenantEntity;
 import com.github.jacek99.springbootcucumber.exception.ConflictException;
@@ -129,7 +130,13 @@ public abstract class AbstractCassandraDao<E extends Comparable<E>,ID> implement
     public void save(TenantToken tenantToken, E entity) {
         ID id = getEntityId(entity);
         if (findById(tenantToken,id).isPresent()) {
-            throw new ConflictException(entityType,String.valueOf(id),"already exists");
+            throw new ConflictException(entityType,String.valueOf(id),
+                    ThreadLocals.STRINGBUILDER.get()
+                    .append(getEntityType().getSimpleName())
+                    .append(" identified by ID ")
+                    .append(id)
+                    .append(" already exists").toString());
+
         } else {
             processSave(tenantToken, entity);
         }

@@ -18,15 +18,11 @@ public class ConflictException extends RuntimeException {
     private final String id;
     private final String reason;
 
-    public ConflictException(Class<?> type, String id, String reason) {
-        super(ThreadLocals.STRINGBUILDER.get()
-                .append("Entity: ").append(type.getSimpleName())
-                .append(" with ID ").append(id)
-                .append(" raised conflict: ").append(reason)
-                .toString());
+    public ConflictException(Class<?> type, String id, String message) {
+        super(message);
         this.type = type;
         this.id = id;
-        this.reason = reason;
+        this.reason = message;
     }
 
 }

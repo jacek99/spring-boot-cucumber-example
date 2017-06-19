@@ -8,6 +8,7 @@ import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import lombok.Data;
 import org.hibernate.validator.constraints.NotEmpty;
+import org.hibernate.validator.constraints.URL;
 
 /**
  * Tenant entity
@@ -32,8 +33,7 @@ public class Tenant implements Comparable<Tenant> {
     private String name;
 
     @Column(name = CassandraConstants.COLUMN_URL)
-    @NotEmpty
-    @Pattern(regexp = "(.+)\\.(.+)") // very simple regex
+    @URL
     private String url;
 
     @Override

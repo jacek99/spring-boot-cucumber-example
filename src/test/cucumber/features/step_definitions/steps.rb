@@ -143,6 +143,19 @@ Then /^I expect HTTP header "([^"]*)" equals "([^"]*)"$/ do |header_name, header
   end
 end
 
+Then(/^I expect HTTP header "([^"]*)" contains "(.*)"$/) do |header_name, header_value|
+  header_value = replace_memorized_variables(header_value)
+  if header_name != SKIP and header_value != SKIP then
+    begin
+      @response[header_name].should include(header_value)
+    rescue RSpec::Expectations::ExpectationNotMetError => error
+      # better error msg with actual JSON vs just the diff from json_spec
+      full_error = "#{error}\nHTTP response: #{@response.body}\n#{@response.header}"
+      raise RSpec::Expectations::ExpectationNotMetError.new(full_error)
+    end
+  end
+end
+
 Then(/^I expect JSON equivalent to$/) do |string|
   string = replace_memorized_variables(string,false)
   expected = JSON.parse(string)

@@ -43,7 +43,7 @@ public class TenantUserAuthenticationProvider implements AuthenticationProvider 
         //  user name format should be <user>@<tenant url>, john@company.com
         String[] parts = StringUtils.split(userName,"@");
         if (parts.length != 2) {
-            throw new UsernameNotFoundException("Uknown user");
+            throw new UsernameNotFoundException("Unknown user");
         }
 
         String tenantId = parts[1];
