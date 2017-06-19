@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
  * Validation error
  * @author Jacek Furmankiewicz
  */
-@Value
 @ResponseStatus(HttpStatus.BAD_REQUEST)
 public class ConstraintViolationException extends RuntimeException {
 

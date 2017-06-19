@@ -12,12 +12,11 @@ import org.springframework.web.bind.annotation.ResponseStatus;
  *
  * @author Jacek Furmankiewcz
  */
-@Value
 @ResponseStatus(value = HttpStatus.CONFLICT)
 public class ConflictException extends RuntimeException {
-    private Class<?> type;
-    private String id;
-    private String reason;
+    private final Class<?> type;
+    private final String id;
+    private final String reason;
 
     public ConflictException(Class<?> type, String id, String reason) {
         super(ThreadLocals.STRINGBUILDER.get()

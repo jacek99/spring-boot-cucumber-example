@@ -16,6 +16,8 @@ public class CassandraConstants {
     public static final String COLUMN_URL = "url";
     public static final String COLUMN_ROLES = "roles";
     public static final String COLUMN_PASSWORD_HASH = "password_hash";
+    public static final String COLUMN_PASSWORD_SALT = "password_salt";
+    public static final String COLUMN_PASSWORD_REP = "password_rep";
     public static final String COLUMN_ACTIVE = "active";
     public static final String COLUMN_COUNTRY_CODE = "country_code";
     public static final String COLUMN_STATE_CODE = "state_code";

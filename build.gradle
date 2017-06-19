@@ -12,6 +12,7 @@ task wrapper(type: Wrapper) {
 
 repositories {
     jcenter()
+    mavenCentral()
 }
 
 dependencies {
@@ -22,6 +23,7 @@ dependencies {
     compile("org.springframework.boot:spring-boot-starter-actuator")
 
     compile 'com.google.guava:guava'
+    compile 'org.apache.commons:commons-lang3:3.6'
     compile 'com.datastax.cassandra:cassandra-driver-core'
     compile 'com.datastax.cassandra:cassandra-driver-mapping'
 

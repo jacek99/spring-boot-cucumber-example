@@ -1,17 +1,8 @@
 package com.github.jacek99.springbootcucumber.dao;
 
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.mapping.Mapper;
-import com.datastax.driver.mapping.Result;
-import com.github.jacek99.springbootcucumber.cassandra.CassandraService;
 import com.github.jacek99.springbootcucumber.domain.Tenant;
-import com.github.jacek99.springbootcucumber.exception.ConflictException;
-import com.github.jacek99.springbootcucumber.exception.NotFoundException;
-import com.github.jacek99.springbootcucumber.security.TenantPrincipal;
-import java.util.List;
-import java.util.Optional;
 import lombok.NonNull;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -19,6 +10,7 @@ import org.springframework.stereotype.Repository;
  * @author Jacek Furmankiewicz
  */
 @Repository
+@Slf4j
 public class TenantDao extends AbstractCassandraDao<Tenant,String> {
 
     public TenantDao() {
@@ -28,5 +20,24 @@ public class TenantDao extends AbstractCassandraDao<Tenant,String> {
     @Override
     protected String getEntityId(@NonNull Tenant entity) {
         return entity.getTenantId();
+    }
+
+    /**
+     * Makes sure system tenant is created on an empty DB
+     */
+    public void createSystemTenant() {
+        Tenant system = getMapper().get(Tenant.SYSTEM_TENANT);
+        if (system == null) {
+            log.info("Creating {} tenant", Tenant.SYSTEM_TENANT);
+
+            system = new Tenant();
+            system.setTenantId(Tenant.SYSTEM_TENANT);
+            system.setName(Tenant.SYSTEM_TENANT);
+            system.setUrl("system");
+
+            getMapper().save(system);
+        } else {
+            log.info("{} tenant already exists, skipping", Tenant.SYSTEM_TENANT);
+        }
     }
 }

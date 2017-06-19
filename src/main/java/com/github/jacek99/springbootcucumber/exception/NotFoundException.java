@@ -10,11 +10,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
  * Thrown when an entity was not found in DB
  * @author Jacek Furmankiewicz
  */
-@Value
 @ResponseStatus(value= HttpStatus.NOT_FOUND)
 public class NotFoundException extends RuntimeException {
-    private Class<?> type;
-    private String id;
+    private final Class<?> type;
+    private final String id;
 
     public NotFoundException(Class<?> type, String id) {
         super(ThreadLocals.STRINGBUILDER.get()

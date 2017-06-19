@@ -8,13 +8,10 @@ import com.datastax.driver.mapping.Result;
 import com.datastax.driver.mapping.annotations.Table;
 import com.github.jacek99.springbootcucumber.cassandra.CassandraService;
 import com.github.jacek99.springbootcucumber.domain.ITenantEntity;
-import com.github.jacek99.springbootcucumber.domain.Tenant;
 import com.github.jacek99.springbootcucumber.exception.ConflictException;
 import com.github.jacek99.springbootcucumber.exception.ConstraintViolationException;
 import com.github.jacek99.springbootcucumber.exception.NotFoundException;
-import com.github.jacek99.springbootcucumber.security.TenantPrincipal;
-import com.google.common.collect.Lists;
-import com.sun.org.apache.regexp.internal.RE;
+import com.github.jacek99.springbootcucumber.security.TenantToken;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -23,9 +20,7 @@ import java.util.TreeSet;
 import javax.validation.ConstraintViolation;
 import lombok.AccessLevel;
 import lombok.Getter;
-import org.omg.CORBA.PUBLIC_MEMBER;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
 /**
@@ -55,7 +50,7 @@ public abstract class AbstractCassandraDao<E extends Comparable<E>,ID> implement
 
     protected AbstractCassandraDao(Class<E> entityType) {
         this.entityType = entityType;
-        tenantEntity = entityType.isAssignableFrom(ITenantEntity.class);
+        tenantEntity = ITenantEntity.class.isAssignableFrom(entityType);
         tableName = entityType.getAnnotation(Table.class).name();
     }
 
@@ -67,19 +62,19 @@ public abstract class AbstractCassandraDao<E extends Comparable<E>,ID> implement
      * Every DAO can override this if the mapping between
      * tenant / entity ID is more complex than the most basic case
      */
-    protected Object[] getQueryColumns(TenantPrincipal user, ID id) {
+    protected Object[] getQueryColumns(TenantToken tenantToken, ID id) {
         if (isTenantEntity()) {
             // every tenant entity should have the tenant ID as the partition key
             // and the entity ID as one or more clustering columns (depending on complexity)
-            return new Object[]{user.getTenant().getTenantId(), id};
+            return new Object[]{tenantToken.getTenant().getTenantId(), id};
         } else {
             return new Object[]{id};
         }
     }
 
     @Override
-    public E findExistingById(TenantPrincipal user, ID id) {
-        E entity = getMapper().get(getQueryColumns(user,id));
+    public E findExistingById(TenantToken tenantToken, ID id) {
+        E entity = getMapper().get(getQueryColumns(tenantToken,id));
         if (entity == null) {
             throw new NotFoundException(entityType,String.valueOf(id));
         } else {
@@ -88,12 +83,12 @@ public abstract class AbstractCassandraDao<E extends Comparable<E>,ID> implement
     }
 
     @Override
-    public Optional<E> findById(TenantPrincipal user, ID id) {
-        return Optional.ofNullable(getMapper().get(getQueryColumns(user,id)));
+    public Optional<E> findById(TenantToken tenantToken, ID id) {
+        return Optional.ofNullable(getMapper().get(getQueryColumns(tenantToken,id)));
     }
 
     @Override
-    public List<E> findAll(TenantPrincipal user) {
+    public List<E> findAll(TenantToken tenantToken) {
         Select select = QueryBuilder.select().from(tableName);
         ResultSet results = cassandra.getSession().execute(select);
         Result<E> mapped = getMapper().map(results);
@@ -103,10 +98,10 @@ public abstract class AbstractCassandraDao<E extends Comparable<E>,ID> implement
         return all;
     }
 
-    protected void processSave(TenantPrincipal user, E entity) {
+    protected void processSave(TenantToken tenantToken, E entity) {
         // ensure it belongs to the right tenant
         if (entity instanceof ITenantEntity) {
-            ((ITenantEntity)entity).setTenantId(user.getTenant().getTenantId());
+            ((ITenantEntity)entity).setTenantId(tenantToken.getTenant().getTenantId());
         }
 
         // ensure it gets validated
@@ -131,35 +126,35 @@ public abstract class AbstractCassandraDao<E extends Comparable<E>,ID> implement
     }
 
     @Override
-    public void save(TenantPrincipal user, E entity) {
+    public void save(TenantToken tenantToken, E entity) {
         ID id = getEntityId(entity);
-        if (findById(user,id).isPresent()) {
+        if (findById(tenantToken,id).isPresent()) {
             throw new ConflictException(entityType,String.valueOf(id),"already exists");
         } else {
-            processSave(user, entity);
+            processSave(tenantToken, entity);
         }
     }
 
     @Override
-    public void update(TenantPrincipal user, E entity) {
+    public void update(TenantToken tenantToken, E entity) {
         ID id = getEntityId(entity);
         // ensure entity already exists, since this an update
-        if (findById(user,id).isPresent()) {
-            processSave(user, entity);
+        if (findById(tenantToken,id).isPresent()) {
+            processSave(tenantToken, entity);
         } else {
             throw new NotFoundException(entityType,String.valueOf(id));
         }
     }
 
     @Override
-    public void saveOrUpate(TenantPrincipal user, E entity) {
-        processSave(user, entity);
+    public void saveOrUpate(TenantToken tenantToken, E entity) {
+        processSave(tenantToken, entity);
     }
 
     @Override
-    public void delete(TenantPrincipal user, ID id) {
+    public void delete(TenantToken tenantToken, ID id) {
         // ensure entity already exists, since this an update
-        if (findById(user,id).isPresent()) {
+        if (findById(tenantToken,id).isPresent()) {
             getMapper().delete(id);
         } else {
             throw new NotFoundException(entityType,String.valueOf(id));

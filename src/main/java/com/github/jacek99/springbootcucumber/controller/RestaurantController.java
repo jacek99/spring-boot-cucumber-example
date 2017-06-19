@@ -3,7 +3,7 @@ package com.github.jacek99.springbootcucumber.controller;
 import com.github.jacek99.springbootcucumber.dao.RestaurantDao;
 import com.github.jacek99.springbootcucumber.dao.RestaurantDao;
 import com.github.jacek99.springbootcucumber.domain.Restaurant;
-import com.github.jacek99.springbootcucumber.security.TenantPrincipal;
+import com.github.jacek99.springbootcucumber.security.TenantToken;
 import com.google.common.base.Preconditions;
 import java.util.List;
 import javax.validation.Valid;
@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @author Jacek Furmankiewicz
  */
 @RestController
-@RequestMapping(value = "/api/restaurants", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+@RequestMapping(value = "/myapp/api/restaurants", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public class RestaurantController {
 
 
@@ -31,36 +31,36 @@ public class RestaurantController {
     private RestaurantDao dao;
 
     @RequestMapping(method = RequestMethod.GET)
-    public List<Restaurant> getAll(@AuthenticationPrincipal TenantPrincipal user) {
-        return dao.findAll(user);
+    public List<Restaurant> getAll(@AuthenticationPrincipal TenantToken tenantToken) {
+        return dao.findAll(tenantToken);
     }
 
     @RequestMapping(method = RequestMethod.POST)
     @ResponseStatus(HttpStatus.CREATED)
-    public Restaurant save(@AuthenticationPrincipal TenantPrincipal user, @RequestBody @Valid Restaurant entity) {
-        dao.save(user, entity);
+    public Restaurant save(@AuthenticationPrincipal TenantToken tenantToken, @RequestBody @Valid Restaurant entity) {
+        dao.save(tenantToken, entity);
         return entity;
     }
 
     @RequestMapping(value = "/{id}", method = RequestMethod.PATCH)
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void update(@AuthenticationPrincipal TenantPrincipal user, @PathVariable("id") String id,
+    public void update(@AuthenticationPrincipal TenantToken tenantToken, @PathVariable("id") String id,
                        @RequestBody @Valid Restaurant entity) {
         // path sanity check
         Preconditions.checkArgument(id.equals(entity.getId()),"id is not consistent with path");
 
-        dao.update(user, entity);
+        dao.update(tenantToken, entity);
     }
 
     @RequestMapping(method = RequestMethod.PUT)
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void saveOrUpdate(@AuthenticationPrincipal TenantPrincipal user, @RequestBody @Valid Restaurant entity) {
-        dao.saveOrUpate(user, entity);
+    public void saveOrUpdate(@AuthenticationPrincipal TenantToken tenantToken, @RequestBody @Valid Restaurant entity) {
+        dao.saveOrUpate(tenantToken, entity);
     }
 
     @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@AuthenticationPrincipal TenantPrincipal user, @PathVariable("id") String id) {
-        dao.delete(user,id);
+    public void delete(@AuthenticationPrincipal TenantToken tenantToken, @PathVariable("id") String id) {
+        dao.delete(tenantToken,id);
     }
 }

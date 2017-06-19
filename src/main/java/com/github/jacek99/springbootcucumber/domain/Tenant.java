@@ -18,6 +18,8 @@ import org.hibernate.validator.constraints.NotEmpty;
 @Data
 public class Tenant implements Comparable<Tenant> {
 
+    public static final String SYSTEM_TENANT = "system";
+
     @PartitionKey
     @Column(name = CassandraConstants.COLUMN_ID)
     @NotEmpty
