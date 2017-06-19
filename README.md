@@ -14,10 +14,16 @@ Cucumber is a Ruby-based tool, hence it needs to be installed first.
 
 ### Linux
 
-Use distro package manager, e.g.::
+Use distro package manager
+
+#### Fedora
 
     sudo dnf install ruby ruby-devel
     
+### Ubuntu
+
+    sudo apt-get install ruby ruby-dev
+
 ### Windows
 
 Use RubyInstaller: https://rubyinstaller.org/
