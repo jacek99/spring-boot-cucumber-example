@@ -39,7 +39,10 @@ That will download and install all the dependencies (as defined in the *Gemfile*
 
 ### Sample BDD feature
 
-Full BDD tests for a simple [Tenant REST API](https://github.com/jacek99/spring-boot-cucumber-example/blob/master/src/test/cucumber/features/tenant_rest.feature).
+Sample Cucumber BDDs:
+
+*  [Tenant REST API](https://github.com/jacek99/spring-boot-cucumber-example/blob/master/src/test/cucumber/features/tenant_rest.feature).
+*  [Tenant User REST API](https://github.com/jacek99/spring-boot-cucumber-example/blob/master/src/test/cucumber/features/tenant_user_rest.feature).
 
 # Running BDD integration tests
 
