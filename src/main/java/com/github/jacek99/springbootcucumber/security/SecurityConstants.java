@@ -15,7 +15,7 @@ public class SecurityConstants {
     /**
      * User within single tenant
      */
-    public static final String ROLE_TENANT_USER = "TENANT_ADMIN";
+    public static final String ROLE_TENANT_USER = "TENANT_USER";
 
     /**
      * Admin within single tenant

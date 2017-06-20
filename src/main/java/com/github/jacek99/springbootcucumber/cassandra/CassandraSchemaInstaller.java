@@ -102,7 +102,7 @@ public class CassandraSchemaInstaller {
             String cql = SchemaBuilder.createTable(TABLE_TENANT_USER)
                     .addPartitionKey(COLUMN_TENANT_ID, DataType.ascii())
                     .addClusteringColumn(COLUMN_USER_ID, DataType.ascii())
-                    .addColumn(COLUMN_ROLES, DataType.list(DataType.ascii()))
+                    .addColumn(COLUMN_ROLES, DataType.set(DataType.ascii()))
                     .addColumn(COLUMN_PASSWORD_HASH, DataType.ascii())
                     .addColumn(COLUMN_PASSWORD_SALT, DataType.ascii())
                     .addColumn(COLUMN_PASSWORD_REP, DataType.cint())

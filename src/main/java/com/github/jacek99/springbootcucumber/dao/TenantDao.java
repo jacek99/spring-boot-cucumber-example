@@ -11,7 +11,7 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 @Slf4j
-public class TenantDao extends AbstractCassandraDao<Tenant,String> {
+public class TenantDao extends AbstractCassandraDao<Tenant,Tenant,String> {
 
     public TenantDao() {
         super(Tenant.class);

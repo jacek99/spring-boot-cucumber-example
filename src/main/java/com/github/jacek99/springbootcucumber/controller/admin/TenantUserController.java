@@ -10,6 +10,7 @@ import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -17,6 +18,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.util.UriComponents;
+import org.springframework.web.util.UriComponentsBuilder;
 
 /**
  * REST APIs for creating tenant users within a tenant
@@ -37,9 +40,15 @@ public class TenantUserController {
 
     @RequestMapping(method = RequestMethod.POST)
     @ResponseStatus(HttpStatus.CREATED)
-    public TenantUser save(@AuthenticationPrincipal TenantToken tenantToken, @RequestBody @Valid TenantUser entity) {
+    public ResponseEntity<TenantUser> save(@AuthenticationPrincipal TenantToken tenantToken,
+                                           @RequestBody @Valid TenantUser entity,
+                                            UriComponentsBuilder b) {
         dao.save(tenantToken, entity);
-        return entity;
+
+        // return 201 and HTTP location header pointing to URI of new resource
+        UriComponents uriComponents =
+                b.path("/myapp/admin/users/{id}").buildAndExpand(entity.getUserId());
+        return ResponseEntity.created(uriComponents.toUri()).body(entity);
     }
 
     @RequestMapping(value = "/{tenantId}", method = RequestMethod.PATCH)

@@ -52,18 +52,19 @@ public class TenantUserAuthenticationProvider implements AuthenticationProvider 
 
         // find user
         String userId = parts[0];
-        TenantUser user = userDao.findById(tenantId, userId)
+        TenantUserDao.TenantUserWithHashInformation user = userDao.getPasswordHashInformation(tenantId, userId)
                 .orElseThrow(() -> new UsernameNotFoundException("Unknown user"));
 
         // validate pwd
-        if (passwordHashingService.isHashValid(password, user.getPasswordHash(), user.getPasswordSalt(),
-                user.getPasswordHashRepetitions())) {
+        PasswordHashingService.HashInfo hashInfo = user.getHashInfo();
+        if (passwordHashingService.isHashValid(password, hashInfo.getPasswordHash(), hashInfo.getSalt(),
+                hashInfo.getRepetitions())) {
 
-            List<GrantedAuthority> roles = user.getRoles().stream()
+            List<GrantedAuthority> roles = user.getUser().getRoles().stream()
                     .map(r -> new SimpleGrantedAuthority(r))
                     .collect(Collectors.toList());
 
-            return new TenantToken(user, tenant, roles);
+            return new TenantToken(user.getUser(), tenant, roles);
 
         } else {
             // delay 1 sec to make brute force attacks harder

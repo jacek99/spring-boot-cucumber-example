@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository;
  * @author Jacek Furmankiewicz
  */
 @Repository
-public class RestaurantDao extends AbstractCassandraDao<Restaurant,String> {
+public class RestaurantDao extends AbstractCassandraDao<Restaurant,Restaurant,String> {
 
     public RestaurantDao() {
         super(Restaurant.class);

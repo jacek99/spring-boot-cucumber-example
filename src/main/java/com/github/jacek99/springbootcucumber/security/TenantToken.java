@@ -50,4 +50,8 @@ public class TenantToken implements Authentication {
     public String getName() {
         return user.getUserId();
     }
+
+    public boolean isSystemTenant() {
+        return Tenant.SYSTEM_TENANT.equals(tenant.getTenantId());
+    }
 }

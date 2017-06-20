@@ -2,7 +2,6 @@ package com.github.jacek99.springbootcucumber.security;
 
 import com.google.common.base.Charsets;
 import java.math.BigInteger;
-import java.nio.charset.Charset;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
@@ -26,7 +25,7 @@ public class PasswordHashingService {
      * number of iterations (i.e. nested hashes, to prevent rainbow
      * table attacks)
      */
-    public HashResult hashPassword(String password) {
+    public HashInfo hashPassword(String password) {
 
         try {
             char[] chars = password.toCharArray();
@@ -38,7 +37,7 @@ public class PasswordHashingService {
 
             byte[] hash = skf.generateSecret(spec).getEncoded();
 
-            return new HashResult(toHex(hash), toHex(salt), repetitions);
+            return new HashInfo(toHex(hash), toHex(salt), repetitions);
 
 
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
@@ -113,7 +112,7 @@ public class PasswordHashingService {
 
 
     @Value
-    public static class HashResult {
+    public static class HashInfo {
         private String passwordHash;
         private String salt;
         // how many times the hash was performed, for further obstruction

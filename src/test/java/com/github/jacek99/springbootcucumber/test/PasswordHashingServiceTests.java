@@ -1,7 +1,6 @@
 package com.github.jacek99.springbootcucumber.test;
 
 import com.github.jacek99.springbootcucumber.security.PasswordHashingService;
-import com.google.common.base.Charsets;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -17,7 +16,7 @@ public class PasswordHashingServiceTests {
     public void basicTest() {
         String password = "ressfdsdfaserea";
 
-        PasswordHashingService.HashResult result =
+        PasswordHashingService.HashInfo result =
                 svc.hashPassword(password);
 
         boolean valid = svc.isHashValid(password, result.getPasswordHash(),
@@ -31,7 +30,7 @@ public class PasswordHashingServiceTests {
         String password = "ressfdsdfaserea";
         String basPassword = password + "a";
 
-        PasswordHashingService.HashResult result =
+        PasswordHashingService.HashInfo result =
                 svc.hashPassword(password);
 
         boolean valid = svc.isHashValid(basPassword, result.getPasswordHash(),

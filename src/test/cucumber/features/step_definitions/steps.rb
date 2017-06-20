@@ -5,6 +5,31 @@ SKIP = "_"
 
 ###### GIVEN #############
 
+Given(/^"(.+):(.+)" sends POST "([^"]+)" using JSON:/) do |user, password, url, table|
+
+  table.hashes.each do |hash|
+    http, request = get_http_request("POST",url,user,password)
+    # support SKIP
+    hash.each do |doc|
+      if doc[1] == SKIP
+        hash.delete(doc[0])
+      end
+    end
+    request["content-type"] = "application/json"
+    request.body = JSON.dump(hash)
+    execute_http_request(http, request)
+    begin
+      @response.code.should == "201"
+    rescue RSpec::Expectations::ExpectationNotMetError => error
+      # better error msg with actual JSON vs just the diff from json_spec
+      full_error = "#{error}\nHTTP response: #{@response.body}\n#{@response.header}"
+      raise RSpec::Expectations::ExpectationNotMetError.new(full_error)
+    end
+  end
+end
+
+
+# form params (legacy)
 Given(/^"(.+):(.+)" sends POST "([^"]+)":/) do |user, password, url, table|
 
   table.hashes.each do |hash|
