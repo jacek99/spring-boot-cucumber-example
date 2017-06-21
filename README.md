@@ -41,6 +41,7 @@ That will download and install all the dependencies (as defined in the *Gemfile*
 
 Sample Cucumber BDDs:
 
+*  [Multi-tenant HTTP basic auth security](https://github.com/jacek99/spring-boot-cucumber-example/blob/master/src/test/cucumber/features/security.feature)
 *  [Tenant REST API](https://github.com/jacek99/spring-boot-cucumber-example/blob/master/src/test/cucumber/features/tenant_rest.feature)
 *  [Tenant User REST API](https://github.com/jacek99/spring-boot-cucumber-example/blob/master/src/test/cucumber/features/tenant_user_rest.feature)
 
