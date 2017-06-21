@@ -176,3 +176,66 @@ Feature: Tenant User REST API
         | userId          | tenantId      | password        |
         | test            | mcdonalds     | testpwd         |
         | test2           | harveys       | testpwd2        |
+
+  @tenant_validation_error
+  Scenario: Tenant validation
+    When "admin@system:adminadmin" sends POST "/myapp/admin/users" with JSON
+    """
+    {
+      "tenantId": "WRONG_TENANT",
+      "userId":"testuser",
+      "active": true,
+      "roles": ["TENANT_ADMIN","TENANT_USER"],
+      "password": "testtest",
+      "<field>": "<value>"
+    }
+    """
+    Then I expect HTTP code 404
+    And I expect JSON equivalent to
+    """
+      {
+        "status": 404,
+        "error": "Not Found",
+        "message": "Entity Tenant with ID WRONG_TENANT does not exist"
+      }
+    """
+
+  @tenant_user_add_error
+  Scenario Outline: Add error handling
+    When "admin@system:adminadmin" sends POST "/myapp/admin/users" with JSON
+    """
+    {
+      "tenantId": "mcdonalds",
+      "userId":"testuser",
+      "active": true,
+      "roles": ["TENANT_ADMIN","TENANT_USER"],
+      "password": "testtest",
+      "<field>": <value>
+    }
+    """
+    Then I expect HTTP code <code>
+    And I expect JSON equivalent to
+    """
+      {
+        "status": <code>,
+        "errors": [
+          {
+            "defaultMessage": "<message>",
+            "objectName": "tenantUser",
+            "field": "<field>",
+            "code": "<errorCode>"
+          }
+        ]
+      }
+    """
+
+    Examples:
+      | field         | value                             | code      | message                                   | errorCode     |
+      | userId        | "a"                               | 400       | size must be between 4 and 30             | Size          |
+      | roles         | []                                | 400       | size must be between 1 and 3              | Size          |
+      # non-existant role
+      | roles         | ["WRONG_ROLE"]                    | 400       | invalid security role specified           | SecurityRoles |
+      # mix of good and non-existant role
+      | roles         | ["WRONG_ROLE","ROLE_TENANT_USER"] | 400       | invalid security role specified           | SecurityRoles |
+      | password      | "a"                               | 400       | size must be between 5 and 100            | Size          |
+

@@ -1,21 +1,11 @@
 package com.github.jacek99.springbootcucumber.domain;
 
-import com.datastax.driver.mapping.annotations.ClusteringColumn;
-import com.datastax.driver.mapping.annotations.Column;
-import com.datastax.driver.mapping.annotations.PartitionKey;
-import com.datastax.driver.mapping.annotations.Table;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.github.jacek99.springbootcucumber.cassandra.CassandraConstants;
-import java.util.List;
+import com.github.jacek99.springbootcucumber.validator.SecurityRoles;
 import java.util.Set;
-import java.util.TreeSet;
-import javax.validation.constraints.Min;
+import javax.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NonNull;
 import org.hibernate.validator.constraints.NotEmpty;
-
-import static com.github.jacek99.springbootcucumber.cassandra.CassandraConstants.*;
 
 /**
  * A user within a single tenant
@@ -29,13 +19,17 @@ public class TenantUser implements ITenantEntity, Comparable<TenantUser> {
     private String tenantId;
 
     @NotEmpty
+    @Size(min=4,max=30)
     private String userId;
 
+    @Size(min = 1, max = 3)
+    @SecurityRoles // custom validator to ensure only valid security roles are accepted
     private Set<String> roles;
 
     private boolean active;
 
     @NotEmpty
+    @Size(min = 5, max = 100)
     // used only for input, dummy value on return
     private String password;
 

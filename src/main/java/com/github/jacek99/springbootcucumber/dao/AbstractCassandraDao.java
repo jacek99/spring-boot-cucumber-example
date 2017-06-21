@@ -27,6 +27,7 @@ import javax.validation.ConstraintViolation;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +43,7 @@ import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
  *
  * @author Jacek Furmankiewicz
  */
+@Slf4j
 public abstract class AbstractCassandraDao<E extends Comparable<E>,R,ID> implements IGenericDao<E,ID> {
 
     @Autowired
@@ -50,6 +52,9 @@ public abstract class AbstractCassandraDao<E extends Comparable<E>,R,ID> impleme
 
     @Autowired
     private LocalValidatorFactoryBean validator;
+
+    @Autowired
+    private TenantDao tenantDao;
 
     @Getter(AccessLevel.PUBLIC)
     private final Class<E> entityType;
@@ -90,6 +95,11 @@ public abstract class AbstractCassandraDao<E extends Comparable<E>,R,ID> impleme
 
     protected Mapper<R> getMapper() {
         return cassandra.getMappingManager().mapper(rowType);
+    }
+
+    // helper method for logging, error messages, etc
+    protected String getEntityName() {
+        return entityType.getSimpleName();
     }
 
     /**
@@ -160,8 +170,17 @@ public abstract class AbstractCassandraDao<E extends Comparable<E>,R,ID> impleme
     }
 
     protected void processSave(TenantToken tenantToken, E entity) {
+        // trigger pre-save extension point
+        preSave(tenantToken, entity);
+
         // ensure it belongs to the right tenant
         if (isTenantEntity()) {
+            ITenantEntity tenantEntity = (ITenantEntity) entity;
+
+            // ensure tenant is valid, if not found will throw 404 error
+            tenantDao.findExistingById(tenantToken, tenantEntity.getTenantId());
+
+            // ensure user has rights to save data for this tenant
             validateSecurity(tenantToken, (ITenantEntity) entity);
         }
 
@@ -183,8 +202,12 @@ public abstract class AbstractCassandraDao<E extends Comparable<E>,R,ID> impleme
         }
 
         // perform actual save
+        log.debug("{}: Saving entity of type {} identified by Id {}",
+                tenantToken.getTenantId(), getEntityName(), getEntityId(entity));
         getMapper().save(toRow(entity));
 
+        // trigger extension point
+        postSave(tenantToken, entity);
     }
 
     @Override
@@ -223,7 +246,17 @@ public abstract class AbstractCassandraDao<E extends Comparable<E>,R,ID> impleme
     public void delete(TenantToken tenantToken, ID id) {
         // ensure entity already exists, since this an update
         if (findById(tenantToken,id).isPresent()) {
+
+            // trigger pre/post extension points
+            preDelete(tenantToken, id);
+
+            log.debug("{}: Saving entity of type {} identified by Id {}",
+                    tenantToken.getTenantId(), getEntityName(), id);
             getMapper().delete(id);
+
+            // trigger post-extension point
+            postDelete(tenantToken, id);
+
         } else {
             throw new NotFoundException(entityType,String.valueOf(id));
         }
@@ -269,5 +302,33 @@ public abstract class AbstractCassandraDao<E extends Comparable<E>,R,ID> impleme
      * of an entity without having to resort to slow reflection
      */
     protected abstract ID getEntityId(E entity);
+
+    /**
+     * Extension point for any pre-save logic.
+     * Any DAO can override this if they need to add custom logic,
+     * custom validation, etc
+     */
+    protected void preSave(TenantToken tenantToken, E entity) {}
+
+    /**
+     * Extension point for any post-save logic.
+     * Any DAO can override this if they need to add custom logic
+     */
+    protected void postSave(TenantToken tenantToken, E entity) {}
+
+    /**
+     * Extension point for any pre-delete logic.
+     * Any DAO can override this if they need to add custom logic,
+     * custom validation, etc
+     */
+    protected void preDelete(TenantToken tenantToken, ID id) {}
+
+    /**
+     * Extension point for any post-delete logic.
+     * Any DAO can override this if they need to add custom logic
+     */
+    protected void postDelete(TenantToken tenantToken, ID id) {}
+
+
 
 }

@@ -1,5 +1,7 @@
 package com.github.jacek99.springbootcucumber.security;
 
+import com.google.common.collect.ImmutableSet;
+
 /**
  * Common security constants
  *
@@ -22,5 +24,10 @@ public class SecurityConstants {
      */
     public static final String ROLE_TENANT_ADMIN = "TENANT_ADMIN";
 
+    /**
+     * For easy validation
+     */
+    public static final ImmutableSet<String> ALL_ROLES = ImmutableSet
+            .of(ROLE_SYSTEM_ADMIN, ROLE_TENANT_ADMIN, ROLE_TENANT_USER);
 
 }
