@@ -83,7 +83,7 @@ public abstract class AbstractCassandraDao<E extends Comparable<E>,R,ID> impleme
      * Constructor
      * For more complex types, where the entity type and row type are different
      */
-    protected AbstractCassandraDao(Class<E> entityType, Class<R> rowType) {
+    protected AbstractCassandraDao(@NonNull Class<E> entityType, @NonNull Class<R> rowType) {
         this.entityType = entityType;
         this.rowType = rowType;
         tenantEntity = ITenantEntity.class.isAssignableFrom(entityType);
@@ -102,23 +102,30 @@ public abstract class AbstractCassandraDao<E extends Comparable<E>,R,ID> impleme
         return entityType.getSimpleName();
     }
 
+    // finds the tenant the entity belongs to
+    // in case of system account, it may belong to a different tenant
+    protected String getEntityTenantId(TenantToken tenantToken, E entity) {
+        return isTenantEntity() ?
+                ((ITenantEntity)entity).getTenantId() : tenantToken.getTenantId();
+    }
+
     /**
      * Every DAO can override this if the mapping between
      * tenant / entity ID is more complex than the most basic case
      */
-    protected Object[] getQueryColumns(TenantToken tenantToken, ID id) {
+    protected Object[] getQueryColumns(String entityTenantId, ID id) {
         if (isTenantEntity()) {
             // every tenant entity should have the tenant ID as the partition key
             // and the entity ID as one or more clustering columns (depending on complexity)
-            return new Object[]{tenantToken.getTenant().getTenantId(), id};
+            return new Object[]{entityTenantId, id};
         } else {
             return new Object[]{id};
         }
     }
 
     @Override
-    public E findExistingById(TenantToken tenantToken, ID id) {
-        E entity = toEntity(getMapper().get(getQueryColumns(tenantToken,id)));
+    public E findExistingById(@NonNull TenantToken tenantToken, ID id) {
+        E entity = toEntity(getMapper().get(getQueryColumns(tenantToken.getTenantId(),id)));
         if (entity == null) {
             throw new NotFoundException(entityType,String.valueOf(id));
         } else {
@@ -127,12 +134,20 @@ public abstract class AbstractCassandraDao<E extends Comparable<E>,R,ID> impleme
     }
 
     @Override
-    public Optional<E> findById(TenantToken tenantToken, ID id) {
-        return Optional.ofNullable(toEntity(getMapper().get(getQueryColumns(tenantToken,id))));
+    public Optional<E> findById(@NonNull TenantToken tenantToken, ID id) {
+        return Optional.ofNullable(toEntity(getMapper().get(getQueryColumns(tenantToken.getTenantId(),id))));
+    }
+
+    /**
+     * Looks at the actual tenant the entity belongs to, which may not be the
+     * same if it is a system tenant
+     */
+    protected Optional<E> findById(String entityTenantId, ID id) {
+        return Optional.ofNullable(toEntity(getMapper().get(getQueryColumns(entityTenantId,id))));
     }
 
     @Override
-    public List<E> findAll(TenantToken tenantToken) {
+    public List<E> findAll(@NonNull TenantToken tenantToken) {
         // limit queries to tenant (unless system tenant)
         Select select = QueryBuilder.select().from(tableName);
         if (isTenantEntity() && !tenantToken.isSystemTenant()) {
@@ -211,9 +226,13 @@ public abstract class AbstractCassandraDao<E extends Comparable<E>,R,ID> impleme
     }
 
     @Override
-    public void save(TenantToken tenantToken, E entity) {
+    public void save(@NonNull TenantToken tenantToken, @NonNull E entity) {
         ID id = getEntityId(entity);
-        if (findById(tenantToken,id).isPresent()) {
+        String entityTenantId = getEntityTenantId(tenantToken, entity);
+
+        // make sure we check for duplicates in the actual tenant the entity belongs to
+        // if call made with system account, it could be a different tenant
+        if (findById(entityTenantId,id).isPresent()) {
             throw new ConflictException(entityType,String.valueOf(id),
                     ThreadLocals.STRINGBUILDER.get()
                     .append(getEntityType().getSimpleName())
@@ -227,7 +246,7 @@ public abstract class AbstractCassandraDao<E extends Comparable<E>,R,ID> impleme
     }
 
     @Override
-    public void update(TenantToken tenantToken, E entity) {
+    public void update(@NonNull TenantToken tenantToken, @NonNull E entity) {
         ID id = getEntityId(entity);
         // ensure entity already exists, since this an update
         if (findById(tenantToken,id).isPresent()) {
@@ -238,12 +257,12 @@ public abstract class AbstractCassandraDao<E extends Comparable<E>,R,ID> impleme
     }
 
     @Override
-    public void saveOrUpate(TenantToken tenantToken, E entity) {
+    public void saveOrUpate(@NonNull TenantToken tenantToken, @NonNull E entity) {
         processSave(tenantToken, entity);
     }
 
     @Override
-    public void delete(TenantToken tenantToken, ID id) {
+    public void delete(@NonNull TenantToken tenantToken, @NonNull ID id) {
         // ensure entity already exists, since this an update
         if (findById(tenantToken,id).isPresent()) {
 

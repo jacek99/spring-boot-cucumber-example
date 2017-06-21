@@ -1,6 +1,8 @@
 package com.github.jacek99.springbootcucumber.dao;
 
 import com.github.jacek99.springbootcucumber.domain.Tenant;
+import com.github.jacek99.springbootcucumber.security.TenantToken;
+import java.util.Optional;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
@@ -20,6 +22,14 @@ public class TenantDao extends AbstractCassandraDao<Tenant,Tenant,String> {
     @Override
     protected String getEntityId(@NonNull Tenant entity) {
         return entity.getTenantId();
+    }
+
+
+    /**
+     * Required for auth layer support, when the TenantToken has not been created yet
+     */
+    public Optional<Tenant> findById(@NonNull String tenantId) {
+        return Optional.ofNullable(toEntity(getMapper().get(tenantId)));
     }
 
     /**

@@ -35,8 +35,14 @@ public class TenantUser implements ITenantEntity, Comparable<TenantUser> {
 
     @Override
     public int compareTo(TenantUser o) {
-        if (this.userId != null & o != null) {
-            return this.userId.compareTo(o.getUserId());
+        if (this.userId != null && this.tenantId != null && o != null) {
+            // sort first by tenant ID, then user Id
+            int c = this.tenantId.compareTo(o.getTenantId());
+            if (c == 0) {
+                return this.userId.compareTo(o.getUserId());
+            } else {
+                return c;
+            }
         } else {
             return 0;
         }

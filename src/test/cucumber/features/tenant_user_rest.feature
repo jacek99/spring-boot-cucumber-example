@@ -139,17 +139,6 @@ Feature: Tenant User REST API
     """
       [
         {
-          "tenantId": "system",
-          "userId": "admin",
-          "roles": [
-            "SYSTEM_ADMIN",
-            "TENANT_ADMIN",
-            "TENANT_USER"
-          ],
-          "active": true,
-          "password": "**********"
-        },
-        {
           "tenantId": "<tenantId>",
           "userId": "<userId>",
           "roles": [
@@ -163,6 +152,17 @@ Feature: Tenant User REST API
           "tenantId": "<tenantId>",
           "userId": "<userId>_extra",
           "roles": [
+            "TENANT_USER"
+          ],
+          "active": true,
+          "password": "**********"
+        },
+        {
+          "tenantId": "system",
+          "userId": "admin",
+          "roles": [
+            "SYSTEM_ADMIN",
+            "TENANT_ADMIN",
             "TENANT_USER"
           ],
           "active": true,
@@ -238,4 +238,97 @@ Feature: Tenant User REST API
       # mix of good and non-existant role
       | roles         | ["WRONG_ROLE","ROLE_TENANT_USER"] | 400       | invalid security role specified           | SecurityRoles |
       | password      | "a"                               | 400       | size must be between 5 and 100            | Size          |
+
+  @tenant_user_dup
+  Scenario Outline: Disallow duplicates (from either system or tenant account)
+    # add an admin user within a tenant
+    When "admin@system:adminadmin" sends POST "/myapp/admin/users" with JSON
+    """
+    {
+      "tenantId": "mcdonalds",
+      "userId":"admin",
+      "active": true,
+      "roles": ["TENANT_ADMIN","TENANT_USER"],
+      "password": "testpassword"
+    }
+    """
+
+    # add a regular user
+    When "<user>@<tenant>:<password>" sends POST "/myapp/admin/users" with JSON
+    """
+    {
+      "tenantId": "mcdonalds",
+      "userId":"ronald",
+      "active": true,
+      "roles": ["TENANT_USER"],
+      "password": "testpassword"
+    }
+    """
+    Then I expect HTTP code 201
+
+    # try add a second one with same ID - should throw a 409 Conflict
+    When "<user>@<tenant>:<password>" sends POST "/myapp/admin/users" with JSON
+    """
+    {
+      "tenantId": "mcdonalds",
+      "userId":"ronald",
+      "active": false,
+      "roles": ["TENANT_USER"],
+      "password": "differentpassword"
+    }
+    """
+    Then I expect HTTP code 409
+    And I expect JSON equivalent to
+    """
+      {
+        "status": 409,
+        "error": "Conflict",
+        "message": "TenantUser identified by ID ronald already exists"
+      }
+    """
+    # verify only 1 user called "ronald" exists
+    # the other one never made it
+    When "admin@system:adminadmin" sends GET "/myapp/admin/users"
+    Then I expect HTTP code 200
+    And I expect JSON equivalent to
+    """
+      [
+        {
+          "tenantId": "mcdonalds",
+          "userId": "admin",
+          "roles": [
+            "TENANT_ADMIN",
+            "TENANT_USER"
+          ],
+          "active": true,
+          "password": "**********"
+        },
+        {
+          "tenantId": "mcdonalds",
+          "userId": "ronald",
+          "roles": [
+            "TENANT_USER"
+          ],
+          "active": true,
+          "password": "**********"
+        },
+        {
+          "tenantId": "system",
+          "userId": "admin",
+          "roles": [
+            "SYSTEM_ADMIN",
+            "TENANT_ADMIN",
+            "TENANT_USER"
+          ],
+          "active": true,
+          "password": "**********"
+        }
+      ]
+    """
+
+    Examples:
+      | user        | tenant      | password      |
+      | admin       | system      | adminadmin    |
+      | admin       | mcdonalds   | testpassword  |
+
 

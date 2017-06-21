@@ -47,7 +47,7 @@ public class TenantUserAuthenticationProvider implements AuthenticationProvider 
         }
 
         String tenantId = parts[1];
-        Tenant tenant = tenantDao.findById(null,tenantId)
+        Tenant tenant = tenantDao.findById(tenantId)
                 .orElseThrow(() -> new UsernameNotFoundException("Unknown user"));
 
         // find user
